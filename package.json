@@ -1,0 +1,36 @@
+{
+  "name": "project-activity-mcp",
+  "version": "1.0.0",
+  "description": "MCP server that aggregates GitHub and local git activity for AI assistants",
+  "type": "module",
+  "bin": {
+    "project-activity-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && shx chmod +x dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "github",
+    "git",
+    "activity",
+    "changelog"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@octokit/rest": "^22.0.1",
+    "simple-git": "^3.32.3",
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.2",
+    "shx": "^0.4.0",
+    "typescript": "^5.9.3"
+  }
+}
