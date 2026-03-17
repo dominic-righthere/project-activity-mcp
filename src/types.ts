@@ -76,6 +76,57 @@ export interface DiffFile {
   patch?: string;
 }
 
+// ── Issue / PR details ───────────────────────────────────────────────
+export interface IssueDetails {
+  number: number;
+  title: string;
+  body: string;
+  state: string;
+  author: string;
+  labels: string[];
+  assignees: string[];
+  milestone?: string;
+  created_at: string;
+  closed_at?: string;
+  url: string;
+}
+
+export interface PRDetails {
+  number: number;
+  title: string;
+  body: string;
+  state: string;
+  author: string;
+  labels: string[];
+  reviewers: string[];
+  merged: boolean;
+  merged_at?: string;
+  url: string;
+  additions: number;
+  deletions: number;
+  changed_files: number;
+}
+
+// ── Context tool results ─────────────────────────────────────────────
+export interface IssueContext {
+  issue: IssueDetails;
+  linked_prs: { pr: PRDetails; commits: Activity[]; diff_summary: DiffFile[] }[];
+  timeline: { date: string; event: string; detail: string }[];
+}
+
+export interface PRContext {
+  pr: PRDetails;
+  linked_issues: IssueDetails[];
+  commits: Activity[];
+  diff: { files: DiffFile[]; stats: { additions: number; deletions: number; files_changed: number } };
+}
+
+export interface CrossProjectActivity {
+  period: { since: string; until: string };
+  projects: { name: string; activities: Activity[] }[];
+  summary: { total_commits: number; prs_merged: number; issues_closed: number };
+}
+
 // ── Repo summary ─────────────────────────────────────────────────────
 export interface RepoSummary {
   name: string;

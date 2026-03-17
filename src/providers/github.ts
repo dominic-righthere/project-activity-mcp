@@ -1,5 +1,5 @@
 import { Octokit } from "@octokit/rest";
-import type { Activity, DiffFile, RepoSummary } from "../types.js";
+import type { Activity, DiffFile, IssueDetails, PRDetails, RepoSummary } from "../types.js";
 
 export class GitHubProvider {
   private octokit: Octokit;
@@ -346,6 +346,106 @@ export class GitHubProvider {
       }));
     } catch (e) {
       console.error(`GitHub getPRDiff error:`, e);
+      return [];
+    }
+  }
+
+  async getIssueDetails(repo: string, issueNumber: number): Promise<IssueDetails | null> {
+    try {
+      const { owner, repo: name } = this.split(repo);
+      const { data } = await this.octokit.issues.get({
+        owner,
+        repo: name,
+        issue_number: issueNumber,
+      });
+      return {
+        number: data.number,
+        title: data.title,
+        body: data.body ?? "",
+        state: data.state,
+        author: data.user?.login ?? "unknown",
+        labels: data.labels.map((l) => (typeof l === "string" ? l : l.name ?? "")),
+        assignees: (data.assignees ?? []).map((a) => a.login),
+        milestone: data.milestone?.title,
+        created_at: data.created_at,
+        closed_at: data.closed_at ?? undefined,
+        url: data.html_url,
+      };
+    } catch (e) {
+      console.error(`GitHub getIssueDetails error for #${issueNumber}:`, e);
+      return null;
+    }
+  }
+
+  async getPRDetails(repo: string, prNumber: number): Promise<PRDetails | null> {
+    try {
+      const { owner, repo: name } = this.split(repo);
+      const { data } = await this.octokit.pulls.get({
+        owner,
+        repo: name,
+        pull_number: prNumber,
+      });
+      return {
+        number: data.number,
+        title: data.title,
+        body: data.body ?? "",
+        state: data.merged ? "merged" : data.state,
+        author: data.user?.login ?? "unknown",
+        labels: data.labels.map((l) => (typeof l === "string" ? l : l.name ?? "")),
+        reviewers: (data.requested_reviewers ?? []).map((r: any) => r.login ?? ""),
+        merged: data.merged,
+        merged_at: data.merged_at ?? undefined,
+        url: data.html_url,
+        additions: data.additions,
+        deletions: data.deletions,
+        changed_files: data.changed_files,
+      };
+    } catch (e) {
+      console.error(`GitHub getPRDetails error for #${prNumber}:`, e);
+      return null;
+    }
+  }
+
+  async getPRCommits(repo: string, project: string, prNumber: number): Promise<Activity[]> {
+    try {
+      const { owner, repo: name } = this.split(repo);
+      const { data } = await this.octokit.pulls.listCommits({
+        owner,
+        repo: name,
+        pull_number: prNumber,
+        per_page: 100,
+      });
+      return data.map((c) => ({
+        id: c.sha,
+        project,
+        source: "github" as const,
+        type: "commit" as const,
+        title: c.commit.message.split("\n")[0],
+        body: c.commit.message,
+        author: c.author?.login ?? c.commit.author?.name ?? "unknown",
+        date: c.commit.author?.date ?? new Date().toISOString(),
+        url: c.html_url,
+        metadata: {},
+      }));
+    } catch (e) {
+      console.error(`GitHub getPRCommits error for PR #${prNumber}:`, e);
+      return [];
+    }
+  }
+
+  async findLinkedPRs(repo: string, issueNumber: number): Promise<number[]> {
+    try {
+      const { owner, repo: name } = this.split(repo);
+      // Search for PRs that reference the issue number
+      const { data } = await this.octokit.search.issuesAndPullRequests({
+        q: `repo:${owner}/${name} is:pr ${issueNumber}`,
+        per_page: 20,
+      });
+      return data.items
+        .filter((item) => item.pull_request)
+        .map((item) => item.number);
+    } catch (e) {
+      console.error(`GitHub findLinkedPRs error for #${issueNumber}:`, e);
       return [];
     }
   }

@@ -11,6 +11,9 @@ import { getActivity } from "./tools/getActivity.js";
 import { getCommitNarrative } from "./tools/getCommitNarrative.js";
 import { getProjectSummary } from "./tools/getProjectSummary.js";
 import { getDiff } from "./tools/getDiff.js";
+import { getIssueContext } from "./tools/getIssueContext.js";
+import { getPRContext } from "./tools/getPRContext.js";
+import { getCrossProjectActivity } from "./tools/getCrossProjectActivity.js";
 
 async function main() {
   const config = loadConfig();
@@ -102,6 +105,61 @@ async function main() {
       }),
     },
     async (args) => getDiff(args, projects, github, local),
+  );
+
+  // ── get_issue_context ────────────────────────────────────────────
+  server.registerTool(
+    "get_issue_context",
+    {
+      description:
+        "Get the full context of a GitHub issue: details, linked PRs, commits, diff summaries, and timeline. Ideal for writing about a bug or feature.",
+      inputSchema: z.object({
+        project: z.string().describe("Project name or slug"),
+        issue: z.number().describe("Issue number"),
+      }),
+    },
+    async (args) => getIssueContext(args, projects, github),
+  );
+
+  // ── get_pr_context ──────────────────────────────────────────────
+  server.registerTool(
+    "get_pr_context",
+    {
+      description:
+        "Get the full context of a pull request: details, linked issues, commits, and diff. Everything needed to write about a code change or feature.",
+      inputSchema: z.object({
+        project: z.string().describe("Project name or slug"),
+        pr: z.number().describe("Pull request number"),
+        include_diff: z
+          .boolean()
+          .optional()
+          .describe("Include file patches in diff (default: false, just stats)"),
+      }),
+    },
+    async (args) => getPRContext(args, projects, github),
+  );
+
+  // ── get_cross_project_activity ──────────────────────────────────
+  server.registerTool(
+    "get_cross_project_activity",
+    {
+      description:
+        'Aggregated activity across multiple projects. Perfect for weekly journals, recaps, or "what I shipped" summaries.',
+      inputSchema: z.object({
+        projects: z
+          .string()
+          .describe('Comma-separated project names, or "all" for every configured project'),
+        since: z
+          .string()
+          .optional()
+          .describe('How far back to look — "7d", "30d", "2w", or ISO date'),
+        types: z
+          .array(z.string())
+          .optional()
+          .describe('Activity types to include: "commits", "prs", "issues", "releases", "discussions", "actions"'),
+      }),
+    },
+    async (args) => getCrossProjectActivity(args, projects, config, github, local),
   );
 
   // ── Start ────────────────────────────────────────────────────────
