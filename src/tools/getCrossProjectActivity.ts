@@ -10,9 +10,11 @@ export async function getCrossProjectActivity(
   github: GitHubProvider | null,
   local: LocalGitProvider,
 ) {
+  const VALID_TYPES = ["commits", "prs", "issues", "releases", "discussions", "actions"] as const;
   const since = parseSince(args.since ?? config.defaults.since);
   const limit = config.defaults.limit;
-  const types = args.types ?? ["commits", "prs", "issues", "releases"];
+  const requested = args.types ?? ["commits", "prs", "issues", "releases"];
+  const types = requested.filter((t) => (VALID_TYPES as readonly string[]).includes(t));
 
   // Resolve which projects to query
   let targetProjects: ProjectRef[];

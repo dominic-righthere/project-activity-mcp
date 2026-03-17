@@ -17,7 +17,8 @@ export async function getActivity(
 
   const since = parseSince(args.since ?? config.defaults.since);
   const limit = args.limit ?? config.defaults.limit;
-  const types = (args.types ?? ["commits", "prs", "issues", "releases"]) as string[];
+  const requested = args.types ?? ["commits", "prs", "issues", "releases"];
+  const types = requested.filter((t) => (VALID_TYPES as readonly string[]).includes(t));
 
   const activities: Activity[] = [];
 

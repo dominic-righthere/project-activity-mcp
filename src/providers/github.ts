@@ -9,8 +9,11 @@ export class GitHubProvider {
   }
 
   private split(repo: string): { owner: string; repo: string } {
-    const [owner, name] = repo.split("/");
-    return { owner, repo: name };
+    const parts = repo.split("/");
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      throw new Error(`Invalid repo format "${repo}" — expected "owner/repo"`);
+    }
+    return { owner: parts[0], repo: parts[1] };
   }
 
   async getCommits(
@@ -307,6 +310,12 @@ export class GitHubProvider {
     }
   }
 
+  private truncatePatch(patch: string | undefined, maxChars = 2000): string | undefined {
+    if (!patch) return undefined;
+    if (patch.length <= maxChars) return patch;
+    return patch.slice(0, maxChars) + "\n[truncated]";
+  }
+
   async getCommitDiff(repo: string, sha: string): Promise<DiffFile[]> {
     try {
       const { owner, repo: name } = this.split(repo);
@@ -320,7 +329,7 @@ export class GitHubProvider {
         status: f.status ?? "modified",
         additions: f.additions,
         deletions: f.deletions,
-        patch: f.patch,
+        patch: this.truncatePatch(f.patch),
       }));
     } catch (e) {
       console.error(`GitHub getCommitDiff error:`, e);
@@ -335,14 +344,14 @@ export class GitHubProvider {
         owner,
         repo: name,
         pull_number: prNumber,
-        per_page: 100,
+        per_page: 30,
       });
       return data.map((f) => ({
         filename: f.filename,
         status: f.status,
         additions: f.additions,
         deletions: f.deletions,
-        patch: f.patch,
+        patch: this.truncatePatch(f.patch),
       }));
     } catch (e) {
       console.error(`GitHub getPRDiff error:`, e);

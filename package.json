@@ -1,11 +1,15 @@
 {
   "name": "project-activity-mcp",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "MCP server that aggregates GitHub and local git activity for AI assistants",
   "type": "module",
   "bin": {
     "project-activity-mcp": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc && shx chmod +x dist/index.js",
     "dev": "tsc --watch"

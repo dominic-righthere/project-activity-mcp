@@ -13,11 +13,15 @@ const CONFIG_PATH = join(
   "config.yaml",
 );
 
+const repoFormat = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+
 const ConfigSchema = z.object({
   github: z
     .object({
       token_env: z.string().optional(),
-      repos: z.array(z.string()),
+      repos: z.array(
+        z.string().regex(repoFormat, 'Each repo must be in "owner/repo" format (e.g. "myorg/myrepo")'),
+      ),
     })
     .optional(),
   local: z
@@ -46,9 +50,28 @@ export function loadConfig(): AppConfig {
     return { defaults: { since: "7d", limit: 20 } };
   }
 
-  const raw = readFileSync(CONFIG_PATH, "utf-8");
-  const parsed = parseYaml(raw);
-  return ConfigSchema.parse(parsed);
+  let raw: string;
+  try {
+    raw = readFileSync(CONFIG_PATH, "utf-8");
+  } catch {
+    throw new Error(`Cannot read config at ${CONFIG_PATH}`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = parseYaml(raw);
+  } catch (e) {
+    throw new Error(`Invalid YAML in ${CONFIG_PATH}: ${(e as Error).message}`);
+  }
+
+  const result = ConfigSchema.safeParse(parsed);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((i) => `  - ${i.path.join(".")}: ${i.message}`)
+      .join("\n");
+    throw new Error(`Invalid config at ${CONFIG_PATH}:\n${issues}`);
+  }
+  return result.data;
 }
 
 /** Merge github repos + local paths into a unified ProjectRef list keyed by slug. */

@@ -3,6 +3,12 @@ import type { GitHubProvider } from "../providers/github.js";
 import type { LocalGitProvider } from "../providers/local.js";
 import { mcpText, mcpError, resolveProject } from "../utils.js";
 
+/** Validate a git ref is safe to pass to the local git provider. */
+function isValidRef(ref: string): boolean {
+  // Reject anything with shell-special chars, path traversal, or git option flags
+  return /^[a-zA-Z0-9._/~^:@{}-]{1,200}$/.test(ref) && !ref.includes("..");
+}
+
 /** Detect if a ref is a PR number, commit SHA, or tag. */
 function detectRefType(ref: string): "pr" | "commit" | "tag" {
   // PR: starts with # or "PR" prefix, or is just a number
@@ -27,6 +33,10 @@ export async function getDiff(
 ) {
   const proj = resolveProject(args.project, projects);
   if (!proj) return mcpError(`Project "${args.project}" not found.`);
+
+  if (!isValidRef(args.ref)) {
+    return mcpError(`Invalid ref "${args.ref}". Use a commit SHA, PR number, or tag name.`);
+  }
 
   const refType = detectRefType(args.ref);
 

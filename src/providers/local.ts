@@ -124,11 +124,16 @@ export class LocalGitProvider {
   async getFullDiff(
     localPath: string,
     ref: string,
+    maxBytes = 50_000,
   ): Promise<string> {
     try {
       if (!existsSync(localPath)) return "";
       const git = this.getGit(localPath);
-      return await git.diff([ref]);
+      const raw = await git.diff([ref]);
+      if (raw.length > maxBytes) {
+        return raw.slice(0, maxBytes) + "\n\n[truncated — diff exceeded 50 KB]";
+      }
+      return raw;
     } catch (e) {
       console.error(`Local getFullDiff error:`, e);
       return "";

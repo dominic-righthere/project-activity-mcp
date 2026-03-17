@@ -79,13 +79,13 @@ Returns the actual code diff with file-level summaries. Useful when the AI needs
 github:
   token_env: GITHUB_TOKEN    # or use gh CLI auth
   repos:
-    - dominic-righthere/sonde
-    - dominic-righthere/envibe
+    - your-org/your-repo
+    - your-org/another-repo
 
 local:
   paths:
-    - ~/work/development/projects/sonde
-    - ~/work/development/projects/envibe
+    - ~/work/projects/your-repo
+    - ~/work/projects/another-repo
 
 defaults:
   since: 7d
@@ -161,9 +161,9 @@ interface Activity {
 
 1. **Install**: `claude mcp add project-activity -- npx project-activity-mcp`
 2. **Ask AI to write a post**:
-   > "What happened in sonde this week? Draft a blog post about the highlights."
-3. **AI calls** `get_activity(project: "sonde", since: "7d")` → gets structured feed
-4. **AI calls** `get_diff(project: "sonde", ref: "PR#42")` → gets details on key changes
+   > "What happened in my-project this week? Draft a blog post about the highlights."
+3. **AI calls** `get_activity(project: "my-project", since: "7d")` → gets structured feed
+4. **AI calls** `get_diff(project: "my-project", ref: "PR#42")` → gets details on key changes
 5. **AI writes** MDX post with real context, not hallucinated features
 
 ---

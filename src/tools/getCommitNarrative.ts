@@ -61,9 +61,8 @@ function groupByAuthor(commits: Activity[]): NarrativeGroup[] {
 }
 
 function groupByPR(commits: Activity[], prs: Activity[]): NarrativeGroup[] {
-  // Simple heuristic: group commits that mention PR numbers
   const groups: NarrativeGroup[] = [];
-  const ungrouped: Activity[] = [];
+  const groupedIds = new Set<string>();
 
   for (const pr of prs) {
     const prNum = pr.id.replace("pr-", "");
@@ -76,21 +75,18 @@ function groupByPR(commits: Activity[], prs: Activity[]): NarrativeGroup[] {
         commits: related,
         summary: `${pr.title}\n${related.map((c) => `  - ${c.title}`).join("\n")}`,
       });
-      // Mark as grouped by removing from pool
-      for (const r of related) {
-        const idx = commits.indexOf(r);
-        if (idx >= 0) commits.splice(idx, 1);
-      }
+      for (const r of related) groupedIds.add(r.id);
     }
   }
 
   // Remaining commits go into "Other changes"
-  if (commits.length > 0) {
-    const meaningful = commits.filter((c) => !isNoise(c.title));
-    const noiseCount = commits.length - meaningful.length;
+  const remaining = commits.filter((c) => !groupedIds.has(c.id));
+  if (remaining.length > 0) {
+    const meaningful = remaining.filter((c) => !isNoise(c.title));
+    const noiseCount = remaining.length - meaningful.length;
     groups.push({
       label: "Other changes",
-      commits,
+      commits: remaining,
       summary:
         meaningful.map((c) => `- ${c.title}`).join("\n") +
         (noiseCount > 0 ? `\n- ...and ${noiseCount} minor fixes` : ""),

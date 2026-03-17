@@ -53,11 +53,23 @@ export async function getIssueContext(
   }
 
   for (const { pr, commits } of linked_prs) {
-    timeline.push({
-      date: pr.merged_at ?? pr.url, // fallback doesn't matter — we check merged
-      event: pr.merged ? "pr_merged" : "pr_opened",
-      detail: `PR #${pr.number}: ${pr.title}`,
-    });
+    if (pr.merged_at) {
+      timeline.push({
+        date: pr.merged_at,
+        event: "pr_merged",
+        detail: `PR #${pr.number}: ${pr.title}`,
+      });
+    } else {
+      // Use the most recent commit date as a proxy for when the PR was active
+      const latestCommit = commits[0]?.date;
+      if (latestCommit) {
+        timeline.push({
+          date: latestCommit,
+          event: "pr_opened",
+          detail: `PR #${pr.number}: ${pr.title} (open)`,
+        });
+      }
+    }
 
     for (const c of commits) {
       timeline.push({
