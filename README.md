@@ -1,5 +1,7 @@
 # project-activity-mcp
 
+> **Archived (2026-05-08).** Capability merged into [PortOS](https://github.com/dominic-righthere/projects-portfolio) as the `portos_github_*` MCP tools (`portos_github_activity`, `portos_github_commit_narrative`, `portos_github_summary`, `portos_github_diff`, `portos_github_issue`, `portos_github_pr`, `portos_cross_project_activity`). The PortOS DB (`Project.git_remote`) replaces this project's YAML config. This repo is kept read-only for reference.
+
 An MCP server that aggregates GitHub and local git activity, giving AI assistants structured context to draft blog posts, changelogs, release notes, and project updates.
 
 ## Installation
